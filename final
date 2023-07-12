@@ -1,0 +1,41 @@
+import pandas as pd
+
+def extract_data(file_path):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    data = []
+    n = 0
+    i = 0
+    while i < len(lines):
+        if 'cusip' in lines[i].lower():
+            n += 1
+            row_data = lines[i].strip().split()
+            if len(row_data) > 1 and row_data[0] in ['0', '1']:
+                row_data = row_data[1:]  # Ignore the first element
+            i += 1
+            while i < len(lines) and 'total' not in lines[i].lower():
+                line_data = lines[i].strip().split()
+                if len(line_data) > 1 and line_data[0] in ['0', '1']:
+                    line_data = line_data[1:]  # Ignore the first element
+                data.append(row_data + line_data)
+                i += 1
+        else:
+            i += 1
+
+    return n, data
+
+def save_to_excel(data, excel_file):
+    df = pd.DataFrame(data)
+    df.to_excel(excel_file, index=False)
+
+# Provide the path to your notepad file
+notepad_file = r'C:\Users\Admin\Desktop\final 2nd notepad.txt'
+
+# Provide the path where you want to save the Excel file
+excel_file = r'C:\Users\Admin\Desktop\ussssssssssssssst.xlsx'
+
+n, extracted_data = extract_data(notepad_file)
+save_to_excel(extracted_data, excel_file)
+
+print(f"Data extracted for {n} rows and saved to {excel_file}.")
