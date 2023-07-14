@@ -1,0 +1,102 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import messagebox, ttk
+from datetime import date
+
+# Load the Excel file into a pandas DataFrame
+df = pd.read_excel('knowledge_base.xlsx')
+
+def get_response(question, response_type):
+    global df
+    keyword = None
+    answer = None
+    link = None
+
+    # Convert question to lowercase for case-insensitive matching
+    question_lower = question.lower()
+
+    # Check if the question is already present in the DataFrame
+    matching_rows = df[df['Question'].apply(lambda x: isinstance(x, str) and x.lower() == question_lower)]
+    if not matching_rows.empty:
+        answer = matching_rows['Answer'].iloc[0]
+        link = matching_rows['Links'].iloc[0]
+    else:
+        # Search for keywords in the question
+        for idx, row in df.iterrows():
+            if isinstance(row['Keyword'], str) and row['Keyword'].lower() in question_lower:
+                keyword = row['Keyword']
+                answer = row['Answer']
+                link = row['Links']
+                break
+
+        # If a keyword is found, add the question to the DataFrame
+        if keyword is not None:
+            new_row = {'Keyword': keyword, 'Question': question, 'Answer': answer, 'Links': link}
+            df = df.append(new_row, ignore_index=True)
+        else:
+            # Add the unknown question to the DataFrame
+            new_row = {'Keyword': '', 'Question': question, 'Answer': '', 'Links': ''}
+            df = df.append(new_row, ignore_index=True)
+            link = date.today().strftime("%d/%m/%y")
+            df.loc[df['Question'] == question, 'Links'] = link
+
+        # Save the updated DataFrame back to the Excel file
+        df.to_excel('knowledge_base.xlsx', index=False)
+
+    response = ''
+    if response_type == 'Answer':
+        response = answer
+    elif response_type == 'Link':
+        response = link
+    elif response_type == 'Both':
+        response = f'Answer: {answer}\nLink: {link}'
+
+    return response
+
+def submit_question():
+    question = entry_question.get()
+    response_type = combo_response_type.get()
+
+    if not question:
+        messagebox.showerror('Error', 'Please enter a question.')
+        return
+
+    response = get_response(question, response_type)
+    if response:
+        if response_type == 'Link':
+            link_window = tk.Toplevel(window)
+            link_window.title('Link')
+            link_text = tk.Text(link_window, height=1, width=50)
+            link_text.insert(tk.END, response)
+            link_text.pack()
+        else:
+            messagebox.showinfo('Response', response)
+    else:
+        messagebox.showinfo('No Response', 'I apologize, but I don\'t have a response to that. Can you please provide more details?')
+
+# Create the GUI window
+window = tk.Tk()
+window.title('VTOB - Virtual Talk Operator Bot')
+
+# Create the question label and entry
+label_question = tk.Label(window, text='Enter your question:')
+label_question.pack()
+
+entry_question = tk.Entry(window, width=50)
+entry_question.pack()
+
+# Create the response type dropdown menu
+label_response_type = tk.Label(window, text='Select response type:')
+label_response_type.pack()
+
+response_types = ['Answer', 'Link', 'Both']
+combo_response_type = ttk.Combobox(window, values=response_types, state='readonly')
+combo_response_type.set(response_types[0])
+combo_response_type.pack()
+
+# Create the submit button
+button_submit = tk.Button(window, text='Submit', command=submit_question)
+button_submit.pack()
+
+# Run the GUI window
+window.mainloop()
