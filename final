@@ -182,7 +182,7 @@ def fix_row(row):
         updated_row.append('0')
     
     try:
-        if(len(row[idx_check])>6 and '/' not in row[idx_check]):
+        if(row[idx_check].isdigit()):
             updated_row.append(row[idx_check])
             idx_check+=1
         else:
@@ -197,7 +197,7 @@ def fix_row(row):
         else:
             updated_row.append('0')
     except:
-        updated_row.append('0')
+        updated_row.append(row[idx_check])
 
     try:
         if('/' in row[idx_check]):
