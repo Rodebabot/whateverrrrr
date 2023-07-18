@@ -1,102 +1,335 @@
 import pandas as pd
-import tkinter as tk
-from tkinter import messagebox, ttk
 
-# Load the Excel file into a pandas DataFrame
-df = pd.read_excel('chatbot.xlsx')
+pd.set_option('max_columns', None)
 
-def get_response(question, response_type):
-    global df
-    keyword = None
-    answer = None
-    link = None
+def read_file(filename):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+    return lines
 
-    # Convert question to lowercase for case-insensitive matching
-    question_lower = question.lower()
+def find_indices(lines, search_text):
+    indices = []
+    for i, line in enumerate(lines):
+        if search_text in line:
+            indices.append(i)
+    return indices
 
-    # Check if the question is already present in the DataFrame
-    matching_rows = df[df['Question'].apply(lambda x: isinstance(x, str) and x.lower() == question_lower)]
-    if not matching_rows.empty:
-        answer = matching_rows['Answer'].iloc[0]
-        link = matching_rows['Links'].iloc[0]
-    else:
-        # Search for keywords in the question
-        for idx, row in df.iterrows():
-            if isinstance(row['Keyword'], str) and row['Keyword'].lower() in question_lower:
-                keyword = row['Keyword']
-                answer = row['Answer']
-                link = row['Links']
-                break
+def get_first_prefix(start, end):
 
-        # If a keyword is found, add the question to the DataFrame
-        if keyword is not None:
-            new_row = {'Keyword': keyword, 'Question': question, 'Answer': answer, 'Links': link}
-            df = df.append(new_row, ignore_index=True)
+    from_to_date = ' '
+    try:
+        from_to_date = lines[start + 3].strip()
+    except:
+        pass
+
+    section = ' '
+    try:
+        section = lines[start + 4]
+        section = section.split(':')[1].strip()
+    except:
+    	pass
+
+    line_column = ' '
+    line = ' '
+    column = ' '
+    try:
+        line_column = lines[start + 9].strip()
+        line_column = line_column.split(':')[1].strip()
+        line_column = line_column.replace('\t','')
+        line_column = line_column.replace(' ','')
+        line,column = line_column.split(',')
+    except:
+    	pass
+
+    first_prefix = ''
+    #first_prefix.extend((from_to_date, section, line, column))
+    first_prefix = from_to_date+','+section+','+line+','+column+','
+    return first_prefix
+
+def fix_second_prefix(row):
+    updated_row=''
+
+    security= ' '
+    try:
+        security = row.split('CUSIP')[0]
+        security = security.split(':')[1]
+        security = security.replace('\t','').strip()
+    except:
+    	pass
+
+    cusip = ' '
+    try:
+        cusip = row.split('CUSIP:')[1]
+        cusip = cusip.split('ISS')[0].strip()
+    except:
+    	pass
+
+    iss_dte = ' '
+    try:
+        iss_dte = row.split('ANNC')[0]
+        iss_dte = iss_dte.split('ISS DTE:')[1].strip()
+    except:
+    	pass
+
+    annc_dte = ' '
+    try:
+        annc_dte = row.split('MAT')[0]
+        annc_dte = annc_dte.split('ANNC DTE:')[1].strip()
+    except:
+    	pass
+
+    mat_rfx_dte = ' '
+    try:
+        mat_rfx_dte = row.split('MAT')[1]
+        mat_rfx_dte = mat_rfx_dte.split(':')[1].strip()
+    except:
+    	pass
+
+    updated_row = security+','+cusip+','+iss_dte+','+annc_dte+','+mat_rfx_dte+','
+    return updated_row
+
+def get_second_prefix(data):
+    to_remove=[]
+    second_prefix = []
+    for i, line in enumerate(data):
+        if("SECURITY TOTALS" in line):
+            try:
+                cleaned = fix_second_prefix(data[i+1])
+            except:
+                pass
+            second_prefix.append(cleaned)
+            to_remove.append(i+1)
+    return to_remove, second_prefix
+
+
+def is_float(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+def is_int(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+
+def fix_row(row):
+    row = row.replace('\t',' ')
+    row = row[2:]
+    row = row.split(' ')
+    updated_row = []
+    row = [i for i in row if i.strip() not in ['', ' ', '\t']]
+    # now, we've a row without any tabs or extra spaces.
+
+    idx_check=0
+
+    try:
+        if(row[idx_check].isdigit() and row[idx_check+1].isdigit()):
+            updated_row.append(row[idx_check])
+            idx_check+=1
         else:
-            # Add the unknown question to the DataFrame
-            new_row = {'Keyword': '', 'Question': question, 'Answer': '', 'Links': ''}
-            df = df.append(new_row, ignore_index=True)
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-        # Save the updated DataFrame back to the Excel file
-        df.to_excel('chatbot.xlsx', index=False)
-
-    response = ''
-    if response_type == 'Answer':
-        response = answer
-    elif response_type == 'Link':
-        response = link
-    elif response_type == 'Both':
-        response = f'Answer: {answer}\nLink: {link}'
-
-    return response
-
-def submit_question():
-    question = entry_question.get()
-    response_type = combo_response_type.get()
-
-    if not question:
-        messagebox.showerror('Error', 'Please enter a question.')
-        return
-
-    response = get_response(question, response_type)
-    if response:
-        if response_type == 'Link':
-            link_window = tk.Toplevel(window)
-            link_window.title('Link')
-            link_text = tk.Text(link_window, height=1, width=50)
-            link_text.insert(tk.END, response)
-            link_text.pack()
+    try:
+        if(row[idx_check].isdigit()):
+            updated_row.append(row[idx_check])
+            idx_check+=1
         else:
-            messagebox.showinfo('Response', response)
-    else:
-        messagebox.showinfo('No Response', 'I apologize, but I don\'t have a response to that. Can you please provide more details?')
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
+    
+    
+    try:
+        if(len(row[idx_check])==3 and row[idx_check].isalpha()):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-# Create the GUI window
-window = tk.Tk()
-window.title('VTOB - Virtual Talk Operator Bot')
+    try:
+        if(len(row[idx_check])==1 and row[idx_check].isalpha()):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-# Create the question label and entry
-label_question = tk.Label(window, text='Enter your question:')
-label_question.pack()
+    try:
+        if(len(row[idx_check])==4):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-entry_question = tk.Entry(window, width=50)
-entry_question.pack()
+    try:
+        if(len(row[idx_check])==1 and row[idx_check].isalpha()):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
+    
+    try:
+        if(len(row[idx_check])>6 and '/' not in row[idx_check]):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-# Create the response type dropdown menu
-label_response_type = tk.Label(window, text='Select response type:')
-label_response_type.pack()
+    try:
+        if(('/' in row[idx_check]) and ('/' in row[idx_check+1])):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-response_types = ['Answer', 'Link', 'Both']
-combo_response_type = ttk.Combobox(window, values=response_types, state='readonly')
-combo_response_type.set(response_types[0])
-combo_response_type.pack()
+    try:
+        if('/' in row[idx_check]):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-# Create the submit button
-button_submit = tk.Button(window, text='Submit', command=submit_question)
-button_submit.pack()
+    try:
+        if((is_float(row[idx_check]) or is_int(row[idx_check]) or '-' in row[idx_check])):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
 
-# Run the GUI window
-window.mainloop()
+    try:
+        if(is_float(row[idx_check]) or is_int(row[idx_check]) or '-' in row[idx_check]):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
+
+    try:
+        if(len(row[idx_check])<=2):
+            updated_row.append(row[idx_check])
+            idx_check+=1
+        else:
+            updated_row.append('0')
+    except:
+        updated_row.append('0')
+
+    updated_row.append(row[idx_check])
+    idx_check+=1
+
+    updated_row.append(row[idx_check])
+    idx_check+=1
+
+    updated_row.append(row[idx_check])
+
+    updated_row = ','.join(updated_row)
+    
+    return updated_row
+
+
+filename = 'example.txt'
+search_text = 'NOMURA SECURITIES INTL'
+
+lines = read_file(filename)
+indices = find_indices(lines, search_text)
+indices.append(-1)
+
+final = []
+transactions = []
+# iterate over every section of "NOMURA SECURITIES INTL"
+for i in range(len(indices) - 1):
+    start = indices[i]
+    end = indices[i+1]
+    data = lines[start:end]
+
+    # ignore the last 2 sections of "NOMURA SECURITIES INTL" 
+    if(len(data)<10):
+    	continue
+
+    # remove last '1' right before next "NOMURA SECURITIES INTL" section
+    if(len(data[-1])<=4):
+    	data.pop()
+
+    first_prefix = get_first_prefix(start, end)
+
+    security_totals_indicies = find_indices(data, 'SECURITY TOTALS')
+
+    try:
+        final_security_totals_index = security_totals_indicies[-1]
+    except:
+    	pass
+
+    try:
+	    if('TRANSACTION COUNT' in data[security_totals_indicies[-1]+1]): # check line right after last 'SECURITY TOTALS'
+	        data = data[10:security_totals_indicies[-1]]
+	        #transactions.append(data[security_totals_indicies[-1]+1])
+	    else:
+	    	data = data[10:end-1]
+    except:
+        #data = data[10:end-1]
+        pass
+
+
+    data.insert(0,'SECURITY TOTALS')
+    
+    to_remove, second_prefix = get_second_prefix(data)
+
+
+    
+    data = [each[:-1] for each in data]
+    data = [item for i, item in enumerate(data) if i not in to_remove]
+
+    second_prefix_updated = []
+
+    for each in second_prefix:
+        temp = []
+        first_second_prefix_combined = first_prefix+each[:-1]
+        temp.append(first_second_prefix_combined)
+        second_prefix_updated.append(temp)
 
 
 
+    
+    
+    for x in range(len(second_prefix_updated)):
+        counter = 0
+        for y in data[1:]:
+            if('SECURITY TOTALS' in y):
+                counter+=1
+                continue
+            temp = second_prefix_updated[counter].copy()
+            temp[0] = temp[0]+','+fix_row(y)
+            final.append(temp)
+
+
+
+final = [i[0] for i in final]
+split_list = [string.split(",") for string in final]
+
+# Convert the split list into a DataFrame
+df = pd.DataFrame(split_list)
+df_no_duplicates = df.drop_duplicates()
+display(df_no_duplicates)
+
+df_no_duplicates.to_csv('a.csv', index=False)
