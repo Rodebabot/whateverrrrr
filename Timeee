@@ -242,3 +242,74 @@ plt.show()
 # Display the predicted volume table
 print(predicted_volumes)
 
+
+
+
+
+
+
+import pandas as pd
+import numpy as np
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from datetime import datetime, timedelta
+
+# Load your data into a pandas DataFrame
+# Make sure the date column is named 'ds' and the volume column is named 'y'
+data = pd.read_csv('your_data.csv')
+data['ds'] = pd.to_datetime(data['ds'])
+data.set_index('ds', inplace=True)
+
+# Prepare data for SARIMA model
+y = data['y']
+
+# Initialize and fit the SARIMA model on the full data
+order = (1, 1, 1)  # You can adjust the order based on your data
+seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
+sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
+sarima_result = sarima_model.fit(disp=False)
+
+# Forecast the next 12 months
+last_date = y.index[-1]
+next_12_months = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=12, freq='M')
+forecast = sarima_result.get_forecast(steps=12)
+
+# Create a table of predicted volume for the next 12 months
+predicted_volumes = forecast.predicted_mean.reset_index()
+predicted_volumes.columns = ['Month', 'Predicted Volume']
+predicted_volumes['Month'] = next_12_months
+predicted_volumes.set_index('Month', inplace=True)
+
+# Create Dash app
+app = dash.Dash(__name__)
+
+app.layout = html.Div([
+    dcc.Graph(
+        id='volume-graph',
+        figure={
+            'data': [
+                {'x': y.index, 'y': y, 'mode': 'lines', 'name': 'Actual Data'},
+                {'x': predicted_volumes.index, 'y': predicted_volumes['Predicted Volume'], 'mode': 'lines', 'name': 'Predicted Data'}
+            ],
+            'layout': {
+                'title': 'Actual vs Predicted Volume',
+                'xaxis': {'title': 'Date'},
+                'yaxis': {'title': 'Volume'}
+            }
+        }
+    ),
+    html.Div([
+        html.H4('Predicted Volume Table'),
+        html.Table([
+            html.Tr([html.Th('Month'), html.Th('Predicted Volume')]),
+            *[html.Tr([html.Td(index.strftime('%B %Y')), html.Td(round(value, 2))]) for index, value in predicted_volumes.iterrows()]
+        ])
+    ])
+])
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
+
