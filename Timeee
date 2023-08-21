@@ -1,0 +1,31 @@
+import pandas as pd
+import numpy as np
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from sklearn.metrics import mean_squared_error
+from datetime import datetime, timedelta
+
+# Load your data into a pandas DataFrame
+# Make sure the date column is named 'ds' and the volume column is named 'y'
+data = pd.read_csv('your_data.csv')
+data['ds'] = pd.to_datetime(data['ds'])
+data.set_index('ds', inplace=True)
+
+# Prepare data for SARIMA model
+y = data['y']
+
+# Initialize and fit the SARIMA model on the full data
+order = (1, 1, 1)  # You can adjust the order based on your data
+seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
+sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
+sarima_result = sarima_model.fit(disp=False)
+
+# Forecast the next 12 months
+forecast = sarima_result.get_forecast(steps=12)
+
+# Create a table of predicted volume for the next 12 months
+predicted_volumes = forecast.predicted_mean.reset_index()
+predicted_volumes.columns = ['Month', 'Predicted Volume']
+predicted_volumes['Month'] = pd.date_range(start=predicted_volumes['Month'].iloc[0], periods=len(predicted_volumes), freq='M')
+predicted_volumes.set_index('Month', inplace=True)
+
+print(predicted_volumes)
