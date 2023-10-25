@@ -1,78 +1,36 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-import pandas as pd
+from tkinter import ttk
 import webbrowser
-import win32com.client as win32
-from datetime import datetime
-from PIL import Image, ImageTk
-import requests
-from bs4 import BeautifulSoup
-
-# Load the Excel file into a DataFrame
-df = pd.read_excel("your_excel_file.xlsx")
-
-def rank_keywords(input_sentence):
-    # ... (rest of your code for keyword matching)
-
-def google_search(query):
-    try:
-        # Construct the Google search URL
-        search_url = f"https://www.google.com/search?q={query}"
-
-        # Send an HTTP GET request to Google
-        response = requests.get(search_url)
-
-        if response.status_code == 200:
-            # Parse the HTML response with BeautifulSoup
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            # Extract the first search result link
-            search_results = soup.find_all("a")
-            for result in search_results:
-                link = result.get("href")
-                if link and link.startswith("/url?"):
-                    # Extract the actual URL from the Google search result
-                    actual_url = link.split("?q=")[1].split("&")[0]
-
-                    # Open the first search result link in a web browser
-                    webbrowser.open(actual_url)
-                    return
-
-        messagebox.showinfo("Search Error", "Could not perform Google search.")
-    except Exception as e:
-        messagebox.showinfo("Search Error", f"An error occurred: {str(e)}")
 
 def search_keywords():
     input_sentence = entry.get()
     
-    if input_sentence:
-        # Perform keyword search
-        rank_keywords(input_sentence)
+    # Perform keyword search
+    keyword_matches = df[df['Keyword'].str.contains(input_sentence, case=False, na=False)]
+    
+    if not keyword_matches.empty:
+        # Handle found keywords and display the results
+        display_results(keyword_matches)
     else:
-        # If no input sentence, perform a Google search with the search bar content
-        google_search(entry.get())
-        return
+        # No keyword found, perform a Google search
+        google_search(input_sentence)
 
-    # Continue with other functionality (displaying results, opening links, etc.)
+def google_search(query):
+    search_url = f"https://www.google.com/search?q={query}"
+    webbrowser.open(search_url)
 
 # Create the main Tkinter window
 root = tk.Tk()
 root.title("Keyword Search App")
 
-# Load and display the logo image
-logo_image = Image.open("logo.png")
-logo_photo = ImageTk.PhotoImage(logo_image)
-logo_label = tk.Label(root, image=logo_photo)
-logo_label.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
-
 # Create and configure the search entry field
 entry = ttk.Entry(root, width=30)
-entry.grid(row=1, column=0, padx=10, pady=10)
+entry.pack(padx=10, pady=10)
 
 # Create a button to trigger the keyword search
 search_button = ttk.Button(root, text="Search", command=search_keywords)
-search_button.grid(row=1, column=1, padx=10, pady=10)
+search_button.pack(padx=10, pady=10)
 
-# ... (rest of your code for displaying results and handling close matches)
+# ... (rest of your code)
 
 root.mainloop()
