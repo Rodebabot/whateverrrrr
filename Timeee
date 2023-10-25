@@ -1,315 +1,78 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
 import pandas as pd
-import numpy as np
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import mean_squared_error
-from datetime import datetime, timedelta
-
-# Load your data into a pandas DataFrame
-# Make sure the date column is named 'ds' and the volume column is named 'y'
-data = pd.read_csv('your_data.csv')
-data['ds'] = pd.to_datetime(data['ds'])
-data.set_index('ds', inplace=True)
-
-# Prepare data for SARIMA model
-y = data['y']
-
-# Initialize and fit the SARIMA model on the full data
-order = (1, 1, 1)  # You can adjust the order based on your data
-seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
-sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
-sarima_result = sarima_model.fit(disp=False)
-
-# Forecast the next 12 months
-forecast = sarima_result.get_forecast(steps=12)
-
-# Create a table of predicted volume for the next 12 months
-predicted_volumes = forecast.predicted_mean.reset_index()
-predicted_volumes.columns = ['Month', 'Predicted Volume']
-predicted_volumes['Month'] = pd.date_range(start=predicted_volumes['Month'].iloc[0], periods=len(predicted_volumes), freq='M')
-predicted_volumes.set_index('Month', inplace=True)
-
-print(predicted_volumes)
-
-
-
-import pandas as pd
-import numpy as np
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import mean_squared_error
-from datetime import datetime, timedelta
-
-# Load your data into a pandas DataFrame
-# Make sure the date column is named 'ds' and the volume column is named 'y'
-data = pd.read_csv('your_data.csv')
-data['ds'] = pd.to_datetime(data['ds'])
-data.set_index('ds', inplace=True)
-
-# Prepare data for SARIMA model
-y = data['y']
-
-# Initialize and fit the SARIMA model on the full data
-order = (1, 1, 1)  # You can adjust the order based on your data
-seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
-sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
-sarima_result = sarima_model.fit(disp=False)
-
-# Forecast the next 12 months
-last_date = y.index[-1]
-next_12_months = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=12, freq='M')
-forecast = sarima_result.get_forecast(steps=12)
-
-# Create a table of predicted volume for the next 12 months
-predicted_volumes = forecast.predicted_mean.reset_index()
-predicted_volumes.columns = ['Month', 'Predicted Volume']
-predicted_volumes['Month'] = next_12_months
-predicted_volumes.set_index('Month', inplace=True)
-
-print(predicted_volumes)
-
-
-
-
-
-
-
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import mean_squared_error
-from datetime import datetime, timedelta
-
-# Load your data into a pandas DataFrame
-# Make sure the date column is named 'ds' and the volume column is named 'y'
-data = pd.read_csv('your_data.csv')
-data['ds'] = pd.to_datetime(data['ds'])
-data.set_index('ds', inplace=True)
-
-# Prepare data for SARIMA model
-y = data['y']
-
-# Initialize and fit the SARIMA model on the full data
-order = (1, 1, 1)  # You can adjust the order based on your data
-seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
-sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
-sarima_result = sarima_model.fit(disp=False)
-
-# Forecast the next 12 months
-last_date = y.index[-1]
-next_12_months = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=12, freq='M')
-forecast = sarima_result.get_forecast(steps=12)
-
-# Create a table of predicted volume for the next 12 months
-predicted_volumes = forecast.predicted_mean.reset_index()
-predicted_volumes.columns = ['Month', 'Predicted Volume']
-predicted_volumes['Month'] = next_12_months
-predicted_volumes.set_index('Month', inplace=True)
-
-# Create a line graph to visualize the actual and predicted data
-plt.figure(figsize=(10, 6))
-plt.plot(y.index, y, label='Actual Data', color='blue')
-plt.plot(predicted_volumes.index, predicted_volumes['Predicted Volume'], label='Predicted Data', color='orange')
-plt.xlabel('Date')
-plt.ylabel('Volume')
-plt.title('Actual vs Predicted Volume')
-plt.legend()
-plt.xticks(rotation=45)
-plt.tight_layout()
-
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import mean_squared_error
-from datetime import datetime, timedelta
-
-# Load your data into a pandas DataFrame
-# Make sure the date column is named 'ds' and the volume column is named 'y'
-data = pd.read_csv('your_data.csv')
-data['ds'] = pd.to_datetime(data['ds'])
-data.set_index('ds', inplace=True)
-
-# Prepare data for SARIMA model
-y = data['y']
-
-# Initialize and fit the SARIMA model on the full data
-order = (1, 1, 1)  # You can adjust the order based on your data
-seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
-sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
-sarima_result = sarima_model.fit(disp=False)
-
-# Forecast the next 12 months
-last_date = y.index[-1]
-next_12_months = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=12, freq='M')
-forecast = sarima_result.get_forecast(steps=12)
-
-# Create a table of predicted volume for the next 12 months
-predicted_volumes = forecast.predicted_mean.reset_index()
-predicted_volumes.columns = ['Month', 'Predicted Volume']
-predicted_volumes['Month'] = next_12_months
-predicted_volumes.set_index('Month', inplace=True)
-
-# Create a line graph to visualize the actual and predicted data
-plt.figure(figsize=(10, 6))
-plt.plot(y.index, y, label='Actual Data', color='blue')
-plt.plot(predicted_volumes.index, predicted_volumes['Predicted Volume'], label='Predicted Data', color='orange')
-plt.xlabel('Date')
-plt.ylabel('Volume')
-plt.title('Actual vs Predicted Volume')
-plt.legend()
-plt.xticks(rotation=45)
-plt.tight_layout()
-
-plt.show()
-
-# Display the predicted volume table
-print(predicted_volumes)
-
-
-
-
-
-
-
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.metrics import mean_squared_error
-from datetime import datetime, timedelta
-
-# Load your data into a pandas DataFrame
-# Make sure the date column is named 'ds' and the volume column is named 'y'
-data = pd.read_csv('your_data.csv')
-data['ds'] = pd.to_datetime(data['ds'])
-data.set_index('ds', inplace=True)
-
-# Resample data to a regular monthly interval and fill in missing values using interpolation
-data_monthly = data.resample('M').sum()
-data_monthly['y'] = data_monthly['y'].interpolate()
-
-# Prepare data for SARIMA model
-y = data_monthly['y']
-
-# Initialize and fit the SARIMA model on the full data
-order = (1, 1, 1)  # You can adjust the order based on your data
-seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
-sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
-sarima_result = sarima_model.fit(disp=False)
-
-# Forecast the next 12 months
-last_date = y.index[-1]
-next_12_months = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=12, freq='M')
-forecast = sarima_result.get_forecast(steps=12)
-
-# Create a table of predicted volume for the next 12 months
-predicted_volumes = forecast.predicted_mean.reset_index()
-predicted_volumes.columns = ['Month', 'Predicted Volume']
-predicted_volumes['Month'] = next_12_months
-predicted_volumes.set_index('Month', inplace=True)
-
-# Create a line graph to visualize the actual and predicted data
-plt.figure(figsize=(10, 6))
-plt.plot(y.index, y, label='Actual Data', color='blue')
-plt.plot(predicted_volumes.index, predicted_volumes['Predicted Volume'], label='Predicted Data', color='orange')
-plt.xlabel('Date')
-plt.ylabel('Volume')
-plt.title('Actual vs Predicted Volume')
-plt.legend()
-plt.xticks(rotation=45)
-plt.tight_layout()
-
-plt.show()
-
-# Display the predicted volume table
-print(predicted_volumes)
-
-
-
-
-
-
-
-import pandas as pd
-import numpy as np
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Input, Output
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from datetime import datetime, timedelta
-
-# Load your data into a pandas DataFrame
-# Make sure the date column is named 'ds' and the volume column is named 'y'
-data = pd.read_csv('your_data.csv')
-data['ds'] = pd.to_datetime(data['ds'])
-data.set_index('ds', inplace=True)
-
-# Prepare data for SARIMA model
-y = data['y']
-
-# Initialize and fit the SARIMA model on the full data
-order = (1, 1, 1)  # You can adjust the order based on your data
-seasonal_order = (1, 1, 1, 12)  # Considering monthly seasonality
-sarima_model = SARIMAX(y, order=order, seasonal_order=seasonal_order)
-sarima_result = sarima_model.fit(disp=False)
-
-# Forecast the next 12 months
-last_date = y.index[-1]
-next_12_months = pd.date_range(start=last_date + pd.DateOffset(months=1), periods=12, freq='M')
-forecast = sarima_result.get_forecast(steps=12)
-
-# Create a table of predicted volume for the next 12 months
-predicted_volumes = forecast.predicted_mean.reset_index()
-predicted_volumes.columns = ['Month', 'Predicted Volume']
-predicted_volumes['Month'] = next_12_months
-predicted_volumes.set_index('Month', inplace=True)
-
-# Create Dash app
-app = dash.Dash(__name__)
-
-app.layout = html.Div([
-    dcc.Graph(
-        id='volume-graph',
-        figure={
-            'data': [
-                {'x': y.index, 'y': y, 'mode': 'lines', 'name': 'Actual Data'},
-                {'x': predicted_volumes.index, 'y': predicted_volumes['Predicted Volume'], 'mode': 'lines', 'name': 'Predicted Data'}
-            ],
-            'layout': {
-                'title': 'Actual vs Predicted Volume',
-                'xaxis': {'title': 'Date'},
-                'yaxis': {'title': 'Volume'}
-            }
-        }
-    ),
-    html.Div([
-        html.H4('Predicted Volume Table'),
-        html.Table([
-            html.Tr([html.Th('Month'), html.Th('Predicted Volume')]),
-            *[html.Tr([html.Td(index.strftime('%B %Y')), html.Td(round(value, 2))]) for index, value in predicted_volumes.iterrows()]
-        ])
-    ])
-])
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
-
+import webbrowser
+import win32com.client as win32
+from datetime import datetime
+from PIL import Image, ImageTk
+import requests
+from bs4 import BeautifulSoup
+
+# Load the Excel file into a DataFrame
+df = pd.read_excel("your_excel_file.xlsx")
+
+def rank_keywords(input_sentence):
+    # ... (rest of your code for keyword matching)
+
+def google_search(query):
+    try:
+        # Construct the Google search URL
+        search_url = f"https://www.google.com/search?q={query}"
+
+        # Send an HTTP GET request to Google
+        response = requests.get(search_url)
+
+        if response.status_code == 200:
+            # Parse the HTML response with BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Extract the first search result link
+            search_results = soup.find_all("a")
+            for result in search_results:
+                link = result.get("href")
+                if link and link.startswith("/url?"):
+                    # Extract the actual URL from the Google search result
+                    actual_url = link.split("?q=")[1].split("&")[0]
+
+                    # Open the first search result link in a web browser
+                    webbrowser.open(actual_url)
+                    return
+
+        messagebox.showinfo("Search Error", "Could not perform Google search.")
+    except Exception as e:
+        messagebox.showinfo("Search Error", f"An error occurred: {str(e)}")
+
+def search_keywords():
+    input_sentence = entry.get()
+    
+    if input_sentence:
+        # Perform keyword search
+        rank_keywords(input_sentence)
+    else:
+        # If no input sentence, perform a Google search with the search bar content
+        google_search(entry.get())
+        return
+
+    # Continue with other functionality (displaying results, opening links, etc.)
+
+# Create the main Tkinter window
+root = tk.Tk()
+root.title("Keyword Search App")
+
+# Load and display the logo image
+logo_image = Image.open("logo.png")
+logo_photo = ImageTk.PhotoImage(logo_image)
+logo_label = tk.Label(root, image=logo_photo)
+logo_label.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+
+# Create and configure the search entry field
+entry = ttk.Entry(root, width=30)
+entry.grid(row=1, column=0, padx=10, pady=10)
+
+# Create a button to trigger the keyword search
+search_button = ttk.Button(root, text="Search", command=search_keywords)
+search_button.grid(row=1, column=1, padx=10, pady=10)
+
+# ... (rest of your code for displaying results and handling close matches)
+
+root.mainloop()
