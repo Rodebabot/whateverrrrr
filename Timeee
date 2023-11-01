@@ -49,3 +49,44 @@ mail.To = 'recipient@email.com'
 mail.Send()
 
 print("Email sent with the filtered data table.")
+
+
+
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import re
+
+# Read the Excel file into a DataFrame
+excel_file = 'your_excel_file.xlsx'  # Replace with your Excel file path
+df = pd.read_excel(excel_file)
+
+# Define a function to extract currencies from a news website
+def get_currencies(country_name):
+    url = f"https://www.google.com/search?q={country_name}+currency"
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        currency_info = soup.find("div", class_="BNeawe iBp4i AP7Wnd").text
+        return currency_info
+    return "Currency information not found"
+
+# Iterate through the DataFrame and perform the search
+currencies = []
+
+for word in df['Column1']:  # Replace 'Column1' with the actual column name
+    if re.search(r'\b\w+\b', word):
+        country_name = re.search(r'\b\w+\b', word).group()
+        currency_info = get_currencies(country_name)
+        currencies.append(f"{country_name}: {currency_info}")
+    else:
+        currencies.append("Country name not found")
+
+# Add the currencies to the DataFrame
+df['Currencies'] = currencies
+
+# Save the updated DataFrame to a new Excel file
+output_excel_file = 'output_currencies.xlsx'
+df.to_excel(output_excel_file, index=False)
+
+print(f"Result saved to {output_excel_file}")
