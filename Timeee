@@ -90,3 +90,46 @@ output_excel_file = 'output_currencies.xlsx'
 df.to_excel(output_excel_file, index=False)
 
 print(f"Result saved to {output_excel_file}")
+
+
+
+
+
+
+import win32com.client
+from datetime import datetime
+import openpyxl
+
+# Create a new Excel workbook
+workbook = openpyxl.Workbook()
+sheet = workbook.active
+sheet['A1'] = 'Index ID'
+sheet['B1'] = 'Categorization Status'
+
+# Connect to Outlook
+outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
+inbox = outlook.GetDefaultFolder(6)  # 6 represents the Inbox folder
+
+# Get the current date
+today = datetime.now().date()
+
+# Iterate through the emails in the Inbox
+row_num = 2  # Start from the second row
+for message in inbox.Items:
+    # Check if the email was received today
+    received_date = message.ReceivedTime.date()
+    if received_date == today:
+        # Get the index ID and categorization status
+        index_id = message.EntryID
+        categorization_status = "Categorized" if message.Categories else "Not Categorized"
+        
+        # Write data to Excel
+        sheet.cell(row=row_num, column=1, value=index_id)
+        sheet.cell(row=row_num, column=2, value=categorization_status)
+        row_num += 1
+
+# Save the Excel file
+workbook.save('OutlookEmails.xlsx')
+
+print('Data has been written to OutlookEmails.xlsx')
+
