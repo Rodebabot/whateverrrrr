@@ -1,58 +1,51 @@
-import tkinter as tk
-from tkinter import ttk
-import webbrowser
-import requests
-from bs4 import BeautifulSoup
+import pandas as pd
+import win32com.client
 
-def search_keywords():
-    input_sentence = entry.get()
-    
-    # Perform keyword search
-    keyword_matches = df[df['Keyword'].str.contains(input_sentence, case=False, na=False)
-    
-    if not keyword_matches.empty:
-        # Handle found keywords and display the results
-        display_results(keyword_matches)
-    else:
-        # No keyword found, activate Google search button
-        google_search_button['state'] = 'normal'
+# Load the Excel file into a DataFrame
+df = pd.read_excel('your_excel_file.xlsx')
 
-def google_search(query):
-    search_url = f"https://www.google.com/search?q={query}"
-    
-    # Perform the Google search and get the first link
-    response = requests.get(search_url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        search_results = soup.find_all('a')
-        first_link = None
-        
-        for result in search_results:
-            link = result.get('href')
-            if link and link.startswith('/url?q='):
-                first_link = link.split('/url?q=')[1]
-                break
-        
-        if first_link:
-            webbrowser.open(first_link)
+# Calculate the deviation and filter rows with deviation > 15%
+df['Deviation'] = ((df['Present'] - df['Past']) / df['Past']) * 100
+filtered_df = df[df['Deviation'] > 15]
 
-# Create the main Tkinter window
-root = tk.Tk()
-root.title("Keyword Search App")
+# Create a proper-looking table with the 3 columns
+filtered_df = filtered_df[['Past', 'Present', 'Deviation']]
 
-# Create and configure the search entry field
-entry = ttk.Entry(root, width=30)
-entry.pack(padx=10, pady=10)
+# Attach the DataFrame to an Outlook email
+outlook = win32com.client.Dispatch('Outlook.Application')
+mail = outlook.CreateItem(0)
+mail.Subject = 'Filtered Data Report'
+mail.Body = 'Please find the attached filtered data.'
+mail.Attachments.Add('filtered_data.xlsx')
+mail.To = 'recipient@email.com'
+mail.Send()
 
-# Create a button to trigger the keyword search
-search_button = ttk.Button(root, text="Search", command=search_keywords)
-search_button.pack(padx=10, pady=10)
+print("Email sent with the filtered data.")
 
-# Create a Google Search button but initially disable it
-google_search_button = ttk.Button(root, text="Google Search", command=lambda: google_search(entry.get()))
-google_search_button.pack(padx=10, pady=10)
-google_search_button['state'] = 'disabled'  # Initially disabled
 
-# ... (rest of your code)
 
-root.mainloop()
+
+
+
+import pandas as pd
+import win32com.client
+
+# Load the Excel file into a DataFrame
+df = pd.read_excel('your_excel_file.xlsx')
+
+# Calculate the deviation and filter rows with deviation > 15%
+df['Deviation'] = ((df['Present'] - df['Past']) / df['Past']) * 100
+filtered_df = df[df['Deviation'] > 15]
+
+# Create an HTML table
+html_table = filtered_df.to_html(index=False)
+
+# Create an Outlook email
+outlook = win32com.client.Dispatch('Outlook.Application')
+mail = outlook.CreateItem(0)
+mail.Subject = 'Filtered Data Report'
+mail.HTMLBody = f"<p>Please find the attached table:</p>{html_table}"
+mail.To = 'recipient@email.com'
+mail.Send()
+
+print("Email sent with the filtered data table.")
